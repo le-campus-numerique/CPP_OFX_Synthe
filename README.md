@@ -7,5 +7,7 @@ The files to edit are src/ofApp.h & src/ofApp.cpp
 
 ## Start the app
 `make`
+
 /!\ If No error ...
+
 `make run`
