@@ -16,6 +16,7 @@ private :
 	float phi = 0;
 	float deltaPhi = 0;
 	float DeltaT = 1 / FREQUENCE_ECH;
+	float phaseAdd;
 
 
 
@@ -45,6 +46,7 @@ public:
 	void gotMessage(ofMessage msg);
 	void audioOut(float * input, int bufferSize, int nChannels);
 
+	
 	void cbAudioProcess(float * s, int nbEch);
 	void cbFT(float * s, float * sFT, int nbEch);
 
@@ -54,7 +56,14 @@ public:
 	int mouseY;
 
     int TAILLE_BUFFER;
+
 	float *signal;
 	float *sigFT;
 
+	float x_1 = 0;
+	float x_2 = 0;
+	float y_1 = 0;
+	float y_2 = 0;
+
+	float filter(float x);
 };

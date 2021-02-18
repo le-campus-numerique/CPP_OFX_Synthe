@@ -1,6 +1,32 @@
 #include "ofApp.h"
 
 
+float x_1 = 0;
+float x_2 = 0;
+float y_1 = 0;
+float y_2 = 0;
+
+
+float ofApp::filter(float x)
+{
+	float R = 1-3*0.0033;
+	float ff = freq / FREQUENCE_ECH;
+	float K = (1-2*R*cos(2*PI*ff)+R*R)/(2-2*cos(2*PI*ff));
+	float a0 = 1-K;
+	float a1 = 2*(K-R)*cos(2*PI*ff);
+	float a2 = R*R-K;
+	float b1 = 2*R*cos(2*PI*ff);
+	float b2 = -(R*R);
+
+	float y = a0*x + a1*x_1 + a2*x_2+b1*y_1+b2*y_2;
+
+	x_2 = x_1;
+	x_1 = x;
+	y_2 = y_1;
+	y_1 = y;
+	return y;
+}
+
 /**
 * Méthode appelée par la carte son toutes les float(nbEch)/FREQUENCE_ECH secondes (512. / 44100. = 11.6 millisecondes)
 * signal est un pointeur vers un vecteur de nbEch échantillons de type flottant.
@@ -14,20 +40,47 @@ void ofApp :: cbAudioProcess(float * s, int nbEch)
 	for (int i = 0; i < nbEch; i++)
 	{
 		// Calculer t
+		t += 1 / FREQUENCE_ECH;
 
 		// Caclculer le signal
+		phi += phaseAdd;
+
+		/*while (phi > 2 * PI)
+			phi -= 2 * PI;*/
+
+		s[i] = 0;
+		if (formeOnde==0)
+		{
+			for (int k = 1; k <= brillance; k++)
+			{
+				s[i] += pow(-1, k) * sin(k*phi) / float(k);
+			}
+			s[i] *= volume;
+		}
+		else if (formeOnde==1)
+		{
+			s[i] = volume*ofRandomf();
+			s[i] = filter(s[i]);
+		}
+
 	}
 }
 
 
-
-
-/**
-* Méthode qui calcule la transformée de fourrier d'un signal s de nbEch. Le signal après transformée de Fourrier est sFT
-*/
-void ofApp :: cbFT(float * s, float * sFT, int nbEch)
+void ofApp :: cbFT(float * s, float * sFFT, int nbEch)
 {
-
+	for (int k = 0; k < nbEch; k++)
+	{
+		float real = 0;
+		float imag = 0;
+		for (int n = 0; n < nbEch; n++)
+		{
+			float theta = -2 * PI*k*n / float(nbEch);
+			real = real + s[n] * cos(theta);
+			imag = imag + s[n] * sin(theta);
+		}
+		sFFT[k] = sqrt(real*real + imag*imag);
+	}
 }
 
 
@@ -205,6 +258,9 @@ void ofApp::keyReleased  (int key)
 
 void ofApp::mouseMoved(int x, int y )
 {
+	freq = x / float(ofGetWidth())*2000;
+	volume = y / float(ofGetHeight());
+	phaseAdd = 2 * PI*freq*DeltaT;
     mouseX = x;
     mouseY = y;
 }
